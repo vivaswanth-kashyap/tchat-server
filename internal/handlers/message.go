@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -34,4 +35,25 @@ func (h *MessageHandlers) NewMessage(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"feedback": "New message created successfully", "message": message})
+}
+
+func (h *MessageHandlers) ReadMessage(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing message id"})
+		return
+	}
+
+	var msg models.Message
+	err := h.DB.First(&msg, id).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "message not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": msg})
 }

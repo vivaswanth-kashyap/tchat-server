@@ -13,7 +13,12 @@ import (
 
 func setupRoutes(router *gin.Engine, database *gorm.DB) {
 	messageHandlers := handlers.NewMessageHandlers(database)
-	router.POST("/newMessage", messageHandlers.NewMessage)
+
+	msgs := router.Group("/messages")
+	{
+		msgs.POST("", messageHandlers.NewMessage)
+		msgs.GET("", messageHandlers.ReadMessage)
+	}
 }
 
 func main() {
@@ -27,6 +32,12 @@ func main() {
 		log.Fatalf("Failed to get underlying SQL DB: %v", err)
 	}
 	defer sqlDB.Close()
+
+	err = database.AutoMigrate(&models.User{})
+	if err != nil {
+		log.Fatalf("Failed to auto migrate database: %v", err)
+	}
+	log.Println("Users Database Migration completed")
 
 	err = database.AutoMigrate(&models.Message{})
 	if err != nil {
