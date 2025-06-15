@@ -18,6 +18,8 @@ func setupRoutes(router *gin.Engine, database *gorm.DB) {
 	{
 		msgs.POST("", messageHandlers.NewMessage)
 		msgs.GET("", messageHandlers.ReadMessage)
+		msgs.GET("/chat", messageHandlers.ReadChat)
+		msgs.GET("/last", messageHandlers.ReadLastSent)
 	}
 }
 

@@ -57,3 +57,51 @@ func (h *MessageHandlers) ReadMessage(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": msg})
 }
+
+func (h *MessageHandlers) ReadChat(c *gin.Context) {
+	senderId := c.Query("sender_id")
+	receiverId := c.Query("receiver_id")
+
+	if senderId == "" || receiverId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "senderid and/or receiverid missing"})
+	}
+
+	var messages []models.Message
+
+	result := h.DB.Where("sender_id = ? AND receiver_id = ?", senderId, receiverId).
+		Find(&messages)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch messages"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"messages": messages})
+}
+
+func (h *MessageHandlers) ReadLastSent(c *gin.Context) {
+	senderId := c.Query("sender_id")
+	receiverId := c.Query("receiver_id")
+
+	if senderId == "" || receiverId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "senderid and/or receiverid missing"})
+	}
+
+	var message models.Message
+
+	result := h.DB.Where("sender_id = ? AND receiver_id = ?", senderId, receiverId).
+		Order("created_at DESC").
+		First(&message)
+
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "No messages found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch message"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": message})
+
+}

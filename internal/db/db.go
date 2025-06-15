@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -27,4 +28,19 @@ func ConnectDb() (*gorm.DB, error) {
 		return nil, err
 	}
 	return db, nil
+}
+
+func ConnectRedis() (*redis.Client, error) {
+	redisURL := os.Getenv("REDIS_URL")
+	if redisURL == "" {
+		return nil, fmt.Errorf("REDIS_URL not set in .env")
+	}
+
+	opt, err := redis.ParseURL(redisURL)
+	if err != nil {
+		return nil, err
+	}
+
+	client := redis.NewClient(opt)
+	return client, nil
 }
